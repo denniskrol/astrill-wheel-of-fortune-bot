@@ -43,6 +43,13 @@ const argv = yargs
         requiresArg: true,
         description: 'WoF token',
     })
+    .option('sleep_time', {
+        type: 'integer',
+        demandOption: false,
+        default: 60,
+        requiresArg: true,
+        description: 'Sleep time in seconds between tries',
+    })
     .help()
     .alias('help', 'h')
     .argv;
@@ -101,23 +108,26 @@ const url = 'https://www.astrill.com/wheel-of-fortune/' + argv.woftoken;
             try {
                 await spinButton.click();
                 console.log('Clicked button, waiting 60 seconds...');
+
+                await page.waitForTimeout(60000);
+
+                try {
+                    console.log('Reloading page...');
+                    await page.goto(url, {timeout: 30000});
+                }
+                catch (error) {
+                    console.log('Failed to get load page. ' + error);
+                }
             }
             catch (error) {
                 console.log('Failed to get click button. ' + error);
             }
         }
         else {
-            console.log('Cant spin, waiting 60 seconds...');
+            console.log('Cant spin, waiting ' + argv.sleep_time + ' seconds...');
         }
 
-        await page.waitForTimeout(60000);
-        try {
-            console.log('Reloading page...');
-            await page.goto(url, {timeout: 30000});
-        }
-        catch (error) {
-            console.log('Failed to get load page. ' + error);
-        }
+        await page.waitForTimeout((argv.sleep_time * 1000));
     }
 })();
 
