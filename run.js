@@ -98,7 +98,6 @@ const url = 'https://www.astrill.com/wheel-of-fortune/' + argv.woftoken;
         let spinButtonInnerText;
         try {
             spinButtonInnerText = await spinButton.innerText();
-            console.log('Spin button text: ' + spinButtonInnerText);
         }
         catch (error) {
             console.log('Failed to get innertext of button. ' + error);
