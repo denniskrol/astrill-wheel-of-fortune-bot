@@ -43,6 +43,12 @@ const argv = yargs
         requiresArg: true,
         description: 'WoF token',
     })
+    .option('headless', {
+        type: 'boolean',
+        demandOption: false,
+        default: true,
+        description: 'Use headless mode',
+    })
     .option('sleep_time', {
         type: 'integer',
         demandOption: false,
@@ -50,11 +56,18 @@ const argv = yargs
         requiresArg: true,
         description: 'Sleep time in seconds between tries',
     })
+    .option('proxy', {
+        type: 'string',
+        demandOption: false,
+        requiresArg: true,
+        description: 'Proxy server',
+    })
     .help()
     .alias('help', 'h')
     .argv;
 
 const device = {
+    'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53',
     'viewport': {
         'width': 1920,
         'height': 900
@@ -64,12 +77,15 @@ const device = {
     'ignoreHTTPSErrors': true
 };
 
-const browserOptions = {
-    headless: false,
-    proxy: {
-        server: 'http://127.0.0.1:7890'
-    }
+let browserOptions = {
+    headless: argv.headless,
 };
+
+if (argv.proxy) {
+    browserOptions.proxy = {
+        server: argv.proxy
+    }
+}
 
 const url = 'https://www.astrill.com/wheel-of-fortune/' + argv.woftoken;
 
@@ -90,9 +106,14 @@ const url = 'https://www.astrill.com/wheel-of-fortune/' + argv.woftoken;
 
     while (true) {
         const spinButton = page.locator('#spin_the_wheel');
-        const spinButtonCount = await spinButton.count();
-        if (!spinButtonCount) {
+
+        try {
+            const spinButtonCount = await spinButton.count();
+        }
+        catch (error) {
             console.log('Cant find spin button');
+
+            continue;
         }
 
         let spinButtonInnerText;
@@ -109,6 +130,17 @@ const url = 'https://www.astrill.com/wheel-of-fortune/' + argv.woftoken;
                 console.log('Clicked button, waiting 60 seconds...');
 
                 await page.waitForTimeout(60000);
+
+                const discountElement = page.locator('#congratulations');
+                let discountElementInnerText;
+                try {
+                    discountElementInnerText = await discountElement.innerText();
+                }
+                catch (error) {
+                    console.log('Failed to get innertext of discount element. ' + error);
+                }
+
+                console.log(discountElementInnerText);
 
                 try {
                     console.log('Reloading page...');
